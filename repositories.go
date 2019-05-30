@@ -11,6 +11,8 @@ import (
 	"net/http"
 
 	"net/url"
+
+	"github.com/sirupsen/logrus"
 )
 
 // RepositoriesService handles communication with the builds
@@ -86,6 +88,7 @@ type RepositoryOption struct {
 
 type repositoriesResponse struct {
 	Repositories []*Repository `json:"repositories"`
+	Pagination   *Pagination   `json:"@pagination"`
 }
 
 // List fetches repositories of current user
@@ -103,12 +106,26 @@ func (rs *RepositoriesService) List(ctx context.Context, opt *RepositoriesOption
 	}
 
 	var rr repositoriesResponse
-	resp, err := rs.client.Do(ctx, req, &rr)
-	if err != nil {
-		return nil, resp, err
+	var repos []*Repository
+	var resp *http.Response
+	for {
+		logrus.Infof("URL: %s", req.URL.String())
+		resp, err = rs.client.Do(ctx, req, &rr)
+		if err != nil {
+			return nil, resp, err
+		}
+		repos = append(repos, rr.Repositories...)
+		if rr.Pagination.IsLast {
+			break
+		}
+		u, err := req.URL.Parse(rr.Pagination.Next.HREF)
+		if err != nil {
+			break
+		}
+		req.URL = u
 	}
 
-	return rr.Repositories, resp, err
+	return repos, resp, err
 }
 
 // ListByOwner fetches repositories base on the provided owner
