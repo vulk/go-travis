@@ -86,12 +86,13 @@ type RepositoryOption struct {
 
 type repositoriesResponse struct {
 	Repositories []*Repository `json:"repositories"`
+	Pagination   *Pagination   `json:"@pagination"`
 }
 
 // List fetches repositories of current user
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/repositories#for_current_user
-func (rs *RepositoriesService) List(ctx context.Context, opt *RepositoriesOption) ([]*Repository, *http.Response, error) {
+func (rs *RepositoriesService) List(ctx context.Context, opt *RepositoriesOption) ([]*Repository, *Response, error) {
 	u, err := urlWithOptions("repos", opt)
 	if err != nil {
 		return nil, nil, err
@@ -105,10 +106,13 @@ func (rs *RepositoriesService) List(ctx context.Context, opt *RepositoriesOption
 	var rr repositoriesResponse
 	resp, err := rs.client.Do(ctx, req, &rr)
 	if err != nil {
-		return nil, resp, err
+		if resp == nil {
+			return nil, nil, err
+		}
+		return nil, newResponse(resp, rr.Pagination), err
 	}
 
-	return rr.Repositories, resp, err
+	return rr.Repositories, newResponse(resp, rr.Pagination), err
 }
 
 // ListByOwner fetches repositories base on the provided owner

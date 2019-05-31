@@ -328,3 +328,66 @@ func Uint(v uint) *uint { return &v }
 // String is a helper routine that allocates a new string value
 // to store v and returns a pointer to it.
 func String(v string) *string { return &v }
+
+// Response wraps the http.Response with extra metadata about page
+type Response struct {
+	*http.Response
+
+	// These are the fields directly returned with the result
+
+	Limit   int  `json:"limit,omitempty"`
+	Offset  int  `json:"offset,omitempty"`
+	Count   int  `json:"count,omitempty"`
+	IsFirst bool `json:"is_first,omitempty"`
+	IsLast  bool `json:"is_last,omitempty"`
+
+	// Each of these is a reference to a potential next/prev/first/last page
+	NextPage  *Page `json:"next,omitempty"`
+	PrevPage  *Page `json:"prev,omitempty"`
+	FirstPage *Page `json:"first,omitempty"`
+	LastPage  *Page `json:"last,omitempty"`
+}
+
+type Pagination struct {
+	Limit   int   `json:"limit,omitempty"`
+	Offset  int   `json:"offset,omitempty"`
+	Count   int   `json:"count,omitempty"`
+	IsFirst bool  `json:"is_first,omitempty"`
+	IsLast  bool  `json:"is_last,omitempty"`
+	Next    *Page `json:"next,omitempty"`
+	Prev    *Page `json:"prev,omitempty"`
+	First   *Page `json:"first,omitempty"`
+	Last    *Page `json:"last,omitempty"`
+}
+
+// Page contains the information about the relative page to the request
+type Page struct {
+	URL    string `json:"@href,omitempty"`
+	Offset int    `json:"offset,omitempty"`
+	Limit  int    `json:"limit,omitempty"`
+}
+
+// newResponse creates a new Response for the provided http.Response.
+// source: https://github.com/google/go-github/blob/6264c797451151865c552c2f3b18db3fcecf27a4/github/github.go#L402
+// r must not be nil.
+func newResponse(r *http.Response, v *Pagination) *Response {
+	response := &Response{Response: r}
+	if v != nil {
+		response.populatePageValues(v)
+	}
+	return response
+}
+
+// populatePageValues copies the pagination metadata from the parsed response
+// to the Response object.
+func (r *Response) populatePageValues(v *Pagination) {
+	r.Limit = v.Limit
+	r.Offset = v.Offset
+	r.Count = v.Count
+	r.IsFirst = v.IsFirst
+	r.IsLast = v.IsLast
+	r.NextPage = v.Next
+	r.PrevPage = v.Prev
+	r.FirstPage = v.First
+	r.LastPage = v.Last
+}
