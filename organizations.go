@@ -62,6 +62,7 @@ type OrganizationsOption struct {
 // from organizations endpoints
 type organizationsResponse struct {
 	Organizations []*Organization `json:"organizations,omitempty"`
+	Pagination    *Pagination     `json:"@pagination"`
 }
 
 // Find fetches an organization with the given id
@@ -90,7 +91,7 @@ func (os *OrganizationsService) Find(ctx context.Context, id uint, opt *Organiza
 // List fetches a list of organizations the current user is a member of
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/organizations#for_current_user
-func (os *OrganizationsService) List(ctx context.Context, opt *OrganizationsOption) ([]*Organization, *http.Response, error) {
+func (os *OrganizationsService) List(ctx context.Context, opt *OrganizationsOption) ([]*Organization, *Response, error) {
 	u, err := urlWithOptions("orgs", opt)
 	if err != nil {
 		return nil, nil, err
@@ -104,8 +105,8 @@ func (os *OrganizationsService) List(ctx context.Context, opt *OrganizationsOpti
 	var or organizationsResponse
 	resp, err := os.client.Do(ctx, req, &or)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, or.Pagination), err
 	}
 
-	return or.Organizations, resp, err
+	return or.Organizations, newResponse(resp, or.Pagination), err
 }

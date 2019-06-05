@@ -73,7 +73,8 @@ type CronsOption struct {
 // cronsResponse represents a response
 // from crons endpoints
 type cronsResponse struct {
-	Crons []*Cron `json:"crons,omitempty"`
+	Crons      []*Cron     `json:"crons,omitempty"`
+	Pagination *Pagination `json:"@pagination"`
 }
 
 const (
@@ -154,7 +155,7 @@ func (cs *CronsService) FindByRepoSlug(ctx context.Context, repoSlug string, bra
 // ListByRepoId fetches crons based on the provided repository id
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/crons#for_repository
-func (cs *CronsService) ListByRepoId(ctx context.Context, repoId uint, opt *CronsOption) ([]*Cron, *http.Response, error) {
+func (cs *CronsService) ListByRepoId(ctx context.Context, repoId uint, opt *CronsOption) ([]*Cron, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("repo/%d/crons", repoId), opt)
 	if err != nil {
 		return nil, nil, err
@@ -168,16 +169,16 @@ func (cs *CronsService) ListByRepoId(ctx context.Context, repoId uint, opt *Cron
 	var cr cronsResponse
 	resp, err := cs.client.Do(ctx, req, &cr)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, cr.Pagination), err
 	}
 
-	return cr.Crons, resp, err
+	return cr.Crons, newResponse(resp, cr.Pagination), err
 }
 
 // ListByRepoSlug fetches crons based on the provided repository slug
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/crons#for_repository
-func (cs *CronsService) ListByRepoSlug(ctx context.Context, repoSlug string, opt *CronsOption) ([]*Cron, *http.Response, error) {
+func (cs *CronsService) ListByRepoSlug(ctx context.Context, repoSlug string, opt *CronsOption) ([]*Cron, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("repo/%s/crons", url.QueryEscape(repoSlug)), opt)
 	if err != nil {
 		return nil, nil, err
@@ -191,10 +192,10 @@ func (cs *CronsService) ListByRepoSlug(ctx context.Context, repoSlug string, opt
 	var cr cronsResponse
 	resp, err := cs.client.Do(ctx, req, &cr)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, cr.Pagination), err
 	}
 
-	return cr.Crons, resp, err
+	return cr.Crons, newResponse(resp, cr.Pagination), err
 }
 
 // CreateByRepoId creates a cron based on the provided repository id and branch name

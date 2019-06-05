@@ -31,13 +31,14 @@ type Warning struct {
 }
 
 type lintResponse struct {
-	Warnings []*Warning `json:"warnings,omitempty"`
+	Warnings   []*Warning  `json:"warnings,omitempty"`
+	Pagination *Pagination `json:"@pagination"`
 }
 
 // Lint validates the .travis.yml file and returns any warnings
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/lint#lint
-func (es *LintService) Lint(ctx context.Context, yml *TravisYml) ([]*Warning, *http.Response, error) {
+func (es *LintService) Lint(ctx context.Context, yml *TravisYml) ([]*Warning, *Response, error) {
 	u, err := urlWithOptions("lint", nil)
 	if err != nil {
 		return nil, nil, err
@@ -51,8 +52,8 @@ func (es *LintService) Lint(ctx context.Context, yml *TravisYml) ([]*Warning, *h
 	var lintResponse lintResponse
 	resp, err := es.client.Do(ctx, req, &lintResponse)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, lintResponse.Pagination), err
 	}
 
-	return lintResponse.Warnings, resp, err
+	return lintResponse.Warnings, newResponse(resp, lintResponse.Pagination), err
 }

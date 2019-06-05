@@ -75,7 +75,8 @@ type JobOption struct {
 }
 
 type jobsResponse struct {
-	Jobs []*Job `json:"jobs"`
+	Jobs       []*Job      `json:"jobs"`
+	Pagination *Pagination `json:"@pagination"`
 }
 
 // jobResponse is only used to parse responses from Restart, Cancel and Debug
@@ -124,7 +125,7 @@ func (js *JobsService) Find(ctx context.Context, id uint, opt *JobOption) (*Job,
 // ListByBuild fetches jobs based on the provided build id
 //
 // Travis CI API docs: https://developer.travis-ci.csom/resource/jobs#find
-func (js *JobsService) ListByBuild(ctx context.Context, buildId uint) ([]*Job, *http.Response, error) {
+func (js *JobsService) ListByBuild(ctx context.Context, buildId uint) ([]*Job, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("build/%d/jobs", buildId), nil)
 	if err != nil {
 		return nil, nil, err
@@ -138,10 +139,10 @@ func (js *JobsService) ListByBuild(ctx context.Context, buildId uint) ([]*Job, *
 	var jr jobsResponse
 	resp, err := js.client.Do(ctx, req, &jr)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, jr.Pagination), err
 	}
 
-	return jr.Jobs, resp, err
+	return jr.Jobs, newResponse(resp, jr.Pagination), err
 }
 
 // List fetches current user's jobs based on the provided options
@@ -149,7 +150,7 @@ func (js *JobsService) ListByBuild(ctx context.Context, buildId uint) ([]*Job, *
 // See jobs_integration_test.go, TestJobsService_Find
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/jobs#find
-func (js *JobsService) List(ctx context.Context, opt *JobsOption) ([]*Job, *http.Response, error) {
+func (js *JobsService) List(ctx context.Context, opt *JobsOption) ([]*Job, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("jobs"), opt)
 	if err != nil {
 		return nil, nil, err
@@ -163,10 +164,10 @@ func (js *JobsService) List(ctx context.Context, opt *JobsOption) ([]*Job, *http
 	var jr jobsResponse
 	resp, err := js.client.Do(ctx, req, &jr)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, jr.Pagination), err
 	}
 
-	return jr.Jobs, resp, err
+	return jr.Jobs, newResponse(resp, jr.Pagination), err
 }
 
 // Cancel cancels a job based on the provided job id

@@ -47,12 +47,13 @@ type BroadcastsOption struct {
 // from broadcast endpoints
 type broadcastsResponse struct {
 	Broadcasts []*Broadcast `json:"broadcasts,omitempty"`
+	Pagination *Pagination  `json:"@pagination"`
 }
 
 // List fetches a list of broadcasts for the current user
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/broadcasts#for_current_user
-func (bs *BroadcastsService) List(ctx context.Context, opt *BroadcastsOption) ([]*Broadcast, *http.Response, error) {
+func (bs *BroadcastsService) List(ctx context.Context, opt *BroadcastsOption) ([]*Broadcast, *Response, error) {
 	u, err := urlWithOptions("broadcasts", opt)
 	if err != nil {
 		return nil, nil, err
@@ -66,8 +67,8 @@ func (bs *BroadcastsService) List(ctx context.Context, opt *BroadcastsOption) ([
 	var br broadcastsResponse
 	resp, err := bs.client.Do(ctx, req, &br)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, br.Pagination), err
 	}
 
-	return br.Broadcasts, resp, err
+	return br.Broadcasts, newResponse(resp, br.Pagination), err
 }

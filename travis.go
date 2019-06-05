@@ -334,7 +334,6 @@ type Response struct {
 	*http.Response
 
 	// These are the fields directly returned with the result
-
 	Limit   int  `json:"limit,omitempty"`
 	Offset  int  `json:"offset,omitempty"`
 	Count   int  `json:"count,omitempty"`
@@ -348,6 +347,7 @@ type Response struct {
 	LastPage  *Page `json:"last,omitempty"`
 }
 
+// Pagination contains the `@pagination` representation from the response JSON.
 type Pagination struct {
 	Limit   int   `json:"limit,omitempty"`
 	Offset  int   `json:"offset,omitempty"`
@@ -360,17 +360,19 @@ type Pagination struct {
 	Last    *Page `json:"last,omitempty"`
 }
 
-// Page contains the information about the relative page to the request
+// Page contains the information about the pages relative to the request
 type Page struct {
 	URL    string `json:"@href,omitempty"`
 	Offset int    `json:"offset,omitempty"`
 	Limit  int    `json:"limit,omitempty"`
 }
 
-// newResponse creates a new Response for the provided http.Response.
-// source: https://github.com/google/go-github/blob/6264c797451151865c552c2f3b18db3fcecf27a4/github/github.go#L402
-// r must not be nil.
+// newResponse creates a new Response for the provided http.Response with
+// the pagination metadata if present.
 func newResponse(r *http.Response, v *Pagination) *Response {
+	if r == nil {
+		return nil
+	}
 	response := &Response{Response: r}
 	if v != nil {
 		response.populatePageValues(v)

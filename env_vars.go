@@ -47,7 +47,8 @@ type EnvVarBody struct {
 // envVarsResponse represents the response of a call
 // to the Travis CI env vars endpoint.
 type envVarsResponse struct {
-	EnvVars []*EnvVar `json:"env_vars"`
+	EnvVars    []*EnvVar   `json:"env_vars"`
+	Pagination *Pagination `json:"@pagination"`
 }
 
 // FindByRepoId fetches environment variable based on the given repository id and env var id
@@ -99,7 +100,7 @@ func (es *EnvVarsService) FindByRepoSlug(ctx context.Context, repoSlug string, i
 // ListByRepoId fetches environment variables based on the given repository id
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/env_vars#for_repository
-func (es *EnvVarsService) ListByRepoId(ctx context.Context, repoId uint) ([]*EnvVar, *http.Response, error) {
+func (es *EnvVarsService) ListByRepoId(ctx context.Context, repoId uint) ([]*EnvVar, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("repo/%d/env_vars", repoId), nil)
 	if err != nil {
 		return nil, nil, err
@@ -113,16 +114,16 @@ func (es *EnvVarsService) ListByRepoId(ctx context.Context, repoId uint) ([]*Env
 	var er envVarsResponse
 	resp, err := es.client.Do(ctx, req, &er)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, er.Pagination), err
 	}
 
-	return er.EnvVars, resp, err
+	return er.EnvVars, newResponse(resp, er.Pagination), err
 }
 
 // ListByRepoSlug fetches environment variables based on the given repository slug
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/env_vars#for_repository
-func (es *EnvVarsService) ListByRepoSlug(ctx context.Context, repoSlug string) ([]*EnvVar, *http.Response, error) {
+func (es *EnvVarsService) ListByRepoSlug(ctx context.Context, repoSlug string) ([]*EnvVar, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("repo/%s/env_vars", url.QueryEscape(repoSlug)), nil)
 	if err != nil {
 		return nil, nil, err
@@ -136,10 +137,10 @@ func (es *EnvVarsService) ListByRepoSlug(ctx context.Context, repoSlug string) (
 	var er envVarsResponse
 	resp, err := es.client.Do(ctx, req, &er)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, er.Pagination), err
 	}
 
-	return er.EnvVars, resp, err
+	return er.EnvVars, newResponse(resp, er.Pagination), err
 }
 
 // CreateByRepoId creates environment variable based on the given repository id

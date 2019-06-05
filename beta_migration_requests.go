@@ -52,12 +52,13 @@ type BetaMigrationRequestBody struct {
 
 type betaMigrationRequestsResponse struct {
 	BetaMigrationRequests []*BetaMigrationRequest `json:"beta_migration_requests,omitempty"`
+	Pagination            *Pagination             `json:"@pagination"`
 }
 
 // List fetches a list of beta migration requests created by the user
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/beta_migration_requests#find
-func (bs *BetaMigrationRequestsService) List(ctx context.Context, userId uint, opt *BetaMigrationRequestsOption) ([]*BetaMigrationRequest, *http.Response, error) {
+func (bs *BetaMigrationRequestsService) List(ctx context.Context, userId uint, opt *BetaMigrationRequestsOption) ([]*BetaMigrationRequest, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("user/%d/beta_migration_requests", userId), opt)
 	if err != nil {
 		return nil, nil, err
@@ -71,10 +72,10 @@ func (bs *BetaMigrationRequestsService) List(ctx context.Context, userId uint, o
 	var bmrr betaMigrationRequestsResponse
 	resp, err := bs.client.Do(ctx, req, &bmrr)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, bmrr.Pagination), err
 	}
 
-	return bmrr.BetaMigrationRequests, resp, err
+	return bmrr.BetaMigrationRequests, newResponse(resp, bmrr.Pagination), err
 }
 
 // Create creates a beta migration request

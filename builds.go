@@ -104,7 +104,8 @@ type BuildOption struct {
 }
 
 type buildsResponse struct {
-	Builds []*Build `json:"builds"`
+	Builds     []*Build    `json:"builds"`
+	Pagination *Pagination `json:"@pagination"`
 }
 
 // buildResponse is only used to parse responses from Restart, Cancel
@@ -162,7 +163,7 @@ func (bs *BuildsService) Find(ctx context.Context, id uint, opt *BuildOption) (*
 // List fetches current user's builds based on the provided options
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/builds#for_current_user
-func (bs *BuildsService) List(ctx context.Context, opt *BuildsOption) ([]*Build, *http.Response, error) {
+func (bs *BuildsService) List(ctx context.Context, opt *BuildsOption) ([]*Build, *Response, error) {
 	u, err := urlWithOptions("builds", opt)
 	if err != nil {
 		return nil, nil, err
@@ -176,16 +177,16 @@ func (bs *BuildsService) List(ctx context.Context, opt *BuildsOption) ([]*Build,
 	var br buildsResponse
 	resp, err := bs.client.Do(ctx, req, &br)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, br.Pagination), err
 	}
 
-	return br.Builds, resp, err
+	return br.Builds, newResponse(resp, br.Pagination), err
 }
 
 // ListByRepoId fetches current user's builds based on the repository id and options
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/builds#find
-func (bs *BuildsService) ListByRepoId(ctx context.Context, repoId uint, opt *BuildsByRepoOption) ([]*Build, *http.Response, error) {
+func (bs *BuildsService) ListByRepoId(ctx context.Context, repoId uint, opt *BuildsByRepoOption) ([]*Build, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("repo/%d/builds", repoId), opt)
 	if err != nil {
 		return nil, nil, err
@@ -199,16 +200,16 @@ func (bs *BuildsService) ListByRepoId(ctx context.Context, repoId uint, opt *Bui
 	var br buildsResponse
 	resp, err := bs.client.Do(ctx, req, &br)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, br.Pagination), err
 	}
 
-	return br.Builds, resp, err
+	return br.Builds, newResponse(resp, br.Pagination), err
 }
 
 // ListByRepoSlug fetches current user's builds based on the repository slug and options
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/builds#find
-func (bs *BuildsService) ListByRepoSlug(ctx context.Context, repoSlug string, opt *BuildsByRepoOption) ([]*Build, *http.Response, error) {
+func (bs *BuildsService) ListByRepoSlug(ctx context.Context, repoSlug string, opt *BuildsByRepoOption) ([]*Build, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("repo/%s/builds", url.QueryEscape(repoSlug)), opt)
 	if err != nil {
 		return nil, nil, err
@@ -222,10 +223,10 @@ func (bs *BuildsService) ListByRepoSlug(ctx context.Context, repoSlug string, op
 	var br buildsResponse
 	resp, err := bs.client.Do(ctx, req, &br)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, br.Pagination), err
 	}
 
-	return br.Builds, resp, err
+	return br.Builds, newResponse(resp, br.Pagination), err
 }
 
 // Cancel cancels a build based on the provided build id

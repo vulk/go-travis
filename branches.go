@@ -58,7 +58,8 @@ type BranchOption struct {
 }
 
 type branchesResponse struct {
-	Branches []*Branch `json:"branches"`
+	Branches   []*Branch   `json:"branches"`
+	Pagination *Pagination `json:"@pagination"`
 }
 
 // FindByRepoId fetches a branch based on the provided repository id and branch name
@@ -110,7 +111,7 @@ func (bs *BranchesService) FindByRepoSlug(ctx context.Context, repoSlug string, 
 // ListByRepoId fetches the branches of a given repository id.
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/branches#find
-func (bs *BranchesService) ListByRepoId(ctx context.Context, repoId uint, opt *BranchesOption) ([]*Branch, *http.Response, error) {
+func (bs *BranchesService) ListByRepoId(ctx context.Context, repoId uint, opt *BranchesOption) ([]*Branch, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("repo/%d/branches", repoId), opt)
 	if err != nil {
 		return nil, nil, err
@@ -124,16 +125,16 @@ func (bs *BranchesService) ListByRepoId(ctx context.Context, repoId uint, opt *B
 	var br branchesResponse
 	resp, err := bs.client.Do(ctx, req, &br)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, br.Pagination), err
 	}
 
-	return br.Branches, resp, err
+	return br.Branches, newResponse(resp, br.Pagination), err
 }
 
 // ListByRepoSlug fetches the branches of a given repository slug.
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/branches#find
-func (bs *BranchesService) ListByRepoSlug(ctx context.Context, repoSlug string, opt *BranchesOption) ([]*Branch, *http.Response, error) {
+func (bs *BranchesService) ListByRepoSlug(ctx context.Context, repoSlug string, opt *BranchesOption) ([]*Branch, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("repo/%s/branches", url.QueryEscape(repoSlug)), opt)
 	if err != nil {
 		return nil, nil, err
@@ -147,8 +148,8 @@ func (bs *BranchesService) ListByRepoSlug(ctx context.Context, repoSlug string, 
 	var br branchesResponse
 	resp, err := bs.client.Do(ctx, req, &br)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, br.Pagination), err
 	}
 
-	return br.Branches, resp, err
+	return br.Branches, newResponse(resp, br.Pagination), err
 }

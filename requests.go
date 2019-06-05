@@ -84,7 +84,8 @@ type RequestBody struct {
 }
 
 type requestsResponse struct {
-	Requests []*Request `json:"requests"`
+	Requests   []*Request  `json:"requests"`
+	Pagination *Pagination `json:"@pagination"`
 }
 
 // FindByRepoId fetches request of given repository id and request id
@@ -172,7 +173,7 @@ type createRequestResponse struct {
 // ListByRepoId fetches requests of given repository id
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/requests#find
-func (rs *RequestsService) ListByRepoId(ctx context.Context, repoId uint, opt *RequestsOption) ([]*Request, *http.Response, error) {
+func (rs *RequestsService) ListByRepoId(ctx context.Context, repoId uint, opt *RequestsOption) ([]*Request, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("repo/%d/requests", repoId), opt)
 	if err != nil {
 		return nil, nil, err
@@ -186,16 +187,16 @@ func (rs *RequestsService) ListByRepoId(ctx context.Context, repoId uint, opt *R
 	var rr requestsResponse
 	resp, err := rs.client.Do(ctx, req, &rr)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, rr.Pagination), err
 	}
 
-	return rr.Requests, resp, err
+	return rr.Requests, newResponse(resp, rr.Pagination), err
 }
 
 // ListByRepoSlug fetches requests of given repository slug
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/requests#find
-func (rs *RequestsService) ListByRepoSlug(ctx context.Context, repoSlug string, opt *RequestsOption) ([]*Request, *http.Response, error) {
+func (rs *RequestsService) ListByRepoSlug(ctx context.Context, repoSlug string, opt *RequestsOption) ([]*Request, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("repo/%s/requests", url.QueryEscape(repoSlug)), opt)
 	if err != nil {
 		return nil, nil, err
@@ -209,10 +210,10 @@ func (rs *RequestsService) ListByRepoSlug(ctx context.Context, repoSlug string, 
 	var rr requestsResponse
 	resp, err := rs.client.Do(ctx, req, &rr)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, rr.Pagination), err
 	}
 
-	return rr.Requests, resp, err
+	return rr.Requests, newResponse(resp, rr.Pagination), err
 }
 
 // CreateByRepoId create requests of given repository id and provided options

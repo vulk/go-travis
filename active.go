@@ -20,7 +20,8 @@ type ActiveService struct {
 // activeResponse represents the response of a call
 // to the Travis CI active endpoint.
 type activeResponse struct {
-	Builds []*Build `json:"builds"`
+	Builds     []*Build    `json:"builds"`
+	Pagination *Pagination `json:"@pagination"`
 }
 
 // ActiveOption specifies the optional parameters for active endpoint
@@ -32,7 +33,7 @@ type ActiveOption struct {
 // FindByOwner fetches active builds based on the owner's name
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/active#for_owner
-func (as *ActiveService) FindByOwner(ctx context.Context, owner string, opt *ActiveOption) ([]*Build, *http.Response, error) {
+func (as *ActiveService) FindByOwner(ctx context.Context, owner string, opt *ActiveOption) ([]*Build, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("owner/%s/active", owner), opt)
 	if err != nil {
 		return nil, nil, err
@@ -46,16 +47,16 @@ func (as *ActiveService) FindByOwner(ctx context.Context, owner string, opt *Act
 	var ar activeResponse
 	resp, err := as.client.Do(ctx, req, &ar)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, ar.Pagination), err
 	}
 
-	return ar.Builds, resp, err
+	return ar.Builds, newResponse(resp, ar.Pagination), err
 }
 
 // FindByGitHubId fetches active builds based on the owner's GitHub id
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/active#for_owner
-func (as *ActiveService) FindByGitHubId(ctx context.Context, githubId uint, opt *ActiveOption) ([]*Build, *http.Response, error) {
+func (as *ActiveService) FindByGitHubId(ctx context.Context, githubId uint, opt *ActiveOption) ([]*Build, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("owner/github_id/%d/active", githubId), opt)
 	if err != nil {
 		return nil, nil, err
@@ -69,8 +70,8 @@ func (as *ActiveService) FindByGitHubId(ctx context.Context, githubId uint, opt 
 	var ar activeResponse
 	resp, err := as.client.Do(ctx, req, &ar)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, ar.Pagination), err
 	}
 
-	return ar.Builds, resp, err
+	return ar.Builds, newResponse(resp, ar.Pagination), err
 }

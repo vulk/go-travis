@@ -45,13 +45,14 @@ type StagesOption struct {
 }
 
 type stagesResponse struct {
-	Stages []*Stage `json:"stages"`
+	Stages     []*Stage    `json:"stages"`
+	Pagination *Pagination `json:"@pagination"`
 }
 
 // ListByBuild fetches stages of the build
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/stages#find
-func (ss *StagesService) ListByBuild(ctx context.Context, buildId uint, opt *StagesOption) ([]*Stage, *http.Response, error) {
+func (ss *StagesService) ListByBuild(ctx context.Context, buildId uint, opt *StagesOption) ([]*Stage, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("build/%d/stages", buildId), opt)
 	if err != nil {
 		return nil, nil, err
@@ -65,8 +66,8 @@ func (ss *StagesService) ListByBuild(ctx context.Context, buildId uint, opt *Sta
 	var sr stagesResponse
 	resp, err := ss.client.Do(ctx, req, &sr)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, sr.Pagination), err
 	}
 
-	return sr.Stages, resp, err
+	return sr.Stages, newResponse(resp, sr.Pagination), err
 }

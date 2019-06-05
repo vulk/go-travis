@@ -60,6 +60,64 @@ func TestRepositoriesService_ListByOwner(t *testing.T) {
 	}
 }
 
+func TestRepositoriesService_ListByOwner_Pagination(t *testing.T) {
+	client, mux, _, teardown := setup()
+	defer teardown()
+
+	owner := "shuheiktgw"
+	mux.HandleFunc(fmt.Sprintf("/owner/%s/repos", owner), func(w http.ResponseWriter, r *http.Request) {
+		testMethod(t, r, http.MethodGet)
+		testFormValues(t, r, values{"active_on_org": "true", "starred": "true", "private": "true"})
+		// Using `Fprintf` because for some reason using `shuheiktgw%%2Fgo-travis` inline would complain about formatting directives, but %% should escape it.
+		fmt.Fprintf(w, `{"repositories": [{"id":1,"name":"go-travis-test","slug":"shuheiktgw/go-travis-test"}], "@pagination": {"limit": 25,"offset": 1,"count": 2,"is_first": true,"is_last": true,"next": null,"prev": null,"first": {  "@href": "/repo/%s/builds",  "offset": 0,  "limit": 25},"last": {  "@href": "/repo/%s/builds?limit=25&offset=-25",  "offset": -25,  "limit": 25}}}`, `shuheiktgw%2Fgo-travis`, `shuheiktgw%2Fgo-travis`)
+	})
+
+	opt := RepositoriesOption{ActiveOnOrg: true, Starred: true, Private: true}
+	_, resp, err := client.Repositories.ListByOwner(context.Background(), owner, &opt)
+
+	if err != nil {
+		t.Errorf("Repository.ListByOwner returned error: %v", err)
+	}
+
+	want := &Response{
+		Response: resp.Response,
+		Limit:    25,
+		Offset:   1,
+		Count:    2,
+		IsFirst:  true,
+		IsLast:   true,
+		NextPage: nil,
+		PrevPage: nil,
+		FirstPage: &Page{
+			URL:    "/repo/shuheiktgw%2Fgo-travis/builds",
+			Offset: 0,
+			Limit:  25,
+		},
+		LastPage: &Page{
+			URL:    "/repo/shuheiktgw%2Fgo-travis/builds?limit=25&offset=-25",
+			Offset: -25,
+			Limit:  25,
+		},
+	}
+
+	// Pointers don't DeepEqual well, so test FirstPage, then put it into the want struct.
+	if !reflect.DeepEqual(resp.FirstPage, want.FirstPage) {
+		t.Errorf("Repository.ListByOwner[pagination:FirstPage] returned %+v, want %+v", resp.FirstPage, want.FirstPage)
+	}
+	want.FirstPage = resp.FirstPage
+
+	// Pointers don't DeepEqual well, so test LastPage, then put it into the want struct.
+	if !reflect.DeepEqual(resp.LastPage, want.LastPage) {
+		t.Errorf("Repository.ListByOwner[pagination:LastPage] returned %+v, want %+v", resp.LastPage, want.LastPage)
+	}
+	want.LastPage = resp.LastPage
+
+	// DeepEqual the entire want (with copied FirstPage, LastPage) against response
+	if !reflect.DeepEqual(resp, want) {
+		t.Errorf("Repository.ListByOwner[pagination] returned %+v, want %+v", resp, want)
+	}
+}
+
 func TestRepositoriesService_ListByGitHubId(t *testing.T) {
 	client, mux, _, teardown := setup()
 	defer teardown()

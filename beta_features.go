@@ -38,12 +38,13 @@ type BetaFeature struct {
 // from organizations endpoints
 type betaFeaturesResponse struct {
 	BetaFeatures []*BetaFeature `json:"beta_features,omitempty"`
+	Pagination   *Pagination    `json:"@pagination"`
 }
 
 // List fetches a list of beta features available to a user
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/beta_features#find
-func (bs *BetaFeaturesService) List(ctx context.Context, userId uint) ([]*BetaFeature, *http.Response, error) {
+func (bs *BetaFeaturesService) List(ctx context.Context, userId uint) ([]*BetaFeature, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("user/%d/beta_features", userId), nil)
 	if err != nil {
 		return nil, nil, err
@@ -57,10 +58,10 @@ func (bs *BetaFeaturesService) List(ctx context.Context, userId uint) ([]*BetaFe
 	var br betaFeaturesResponse
 	resp, err := bs.client.Do(ctx, req, &br)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, br.Pagination), err
 	}
 
-	return br.BetaFeatures, resp, err
+	return br.BetaFeatures, newResponse(resp, br.Pagination), err
 }
 
 // Update updates a user's beta_feature

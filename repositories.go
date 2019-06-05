@@ -118,7 +118,7 @@ func (rs *RepositoriesService) List(ctx context.Context, opt *RepositoriesOption
 // ListByOwner fetches repositories base on the provided owner
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/repositories#for_owner
-func (rs *RepositoriesService) ListByOwner(ctx context.Context, owner string, opt *RepositoriesOption) ([]*Repository, *http.Response, error) {
+func (rs *RepositoriesService) ListByOwner(ctx context.Context, owner string, opt *RepositoriesOption) ([]*Repository, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("owner/%s/repos", owner), opt)
 	if err != nil {
 		return nil, nil, err
@@ -132,16 +132,16 @@ func (rs *RepositoriesService) ListByOwner(ctx context.Context, owner string, op
 	var rr repositoriesResponse
 	resp, err := rs.client.Do(ctx, req, &rr)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, rr.Pagination), err
 	}
 
-	return rr.Repositories, resp, err
+	return rr.Repositories, newResponse(resp, rr.Pagination), err
 }
 
 // ListByGitHubId fetches repositories base on the provided GitHub Id
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/repositories#for_owner
-func (rs *RepositoriesService) ListByGitHubId(ctx context.Context, id uint, opt *RepositoriesOption) ([]*Repository, *http.Response, error) {
+func (rs *RepositoriesService) ListByGitHubId(ctx context.Context, id uint, opt *RepositoriesOption) ([]*Repository, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("owner/github_id/%d/repos", id), opt)
 	if err != nil {
 		return nil, nil, err
@@ -155,10 +155,10 @@ func (rs *RepositoriesService) ListByGitHubId(ctx context.Context, id uint, opt 
 	var rr repositoriesResponse
 	resp, err := rs.client.Do(ctx, req, &rr)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, rr.Pagination), err
 	}
 
-	return rr.Repositories, resp, err
+	return rr.Repositories, newResponse(resp, rr.Pagination), err
 }
 
 // Find fetches a repository based on the provided slug

@@ -47,13 +47,14 @@ type MessagesOption struct {
 // messagesResponse represents a response
 // from messages endpoints
 type messagesResponse struct {
-	Messages []*Message `json:"messages,omitempty"`
+	Messages   []*Message  `json:"messages,omitempty"`
+	Pagination *Pagination `json:"@pagination"`
 }
 
 // ListByRepoId returns a list of messages created by travis-yml for a request, if any exist.
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/messages#for_request
-func (ms *MessagesService) ListByRepoId(ctx context.Context, repoId uint, requestId uint, opt *MessagesOption) ([]*Message, *http.Response, error) {
+func (ms *MessagesService) ListByRepoId(ctx context.Context, repoId uint, requestId uint, opt *MessagesOption) ([]*Message, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("repo/%d/request/%d/messages", repoId, requestId), opt)
 	if err != nil {
 		return nil, nil, err
@@ -67,16 +68,16 @@ func (ms *MessagesService) ListByRepoId(ctx context.Context, repoId uint, reques
 	var mr messagesResponse
 	resp, err := ms.client.Do(ctx, req, &mr)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, mr.Pagination), err
 	}
 
-	return mr.Messages, resp, err
+	return mr.Messages, newResponse(resp, mr.Pagination), err
 }
 
 // ListByRepoSlug returns a list of messages created by travis-yml for a request, if any exist.
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/messages#for_request
-func (ms *MessagesService) ListByRepoSlug(ctx context.Context, repoSlug string, requestId uint, opt *MessagesOption) ([]*Message, *http.Response, error) {
+func (ms *MessagesService) ListByRepoSlug(ctx context.Context, repoSlug string, requestId uint, opt *MessagesOption) ([]*Message, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("repo/%s/request/%d/messages", url.QueryEscape(repoSlug), requestId), opt)
 	if err != nil {
 		return nil, nil, err
@@ -90,8 +91,8 @@ func (ms *MessagesService) ListByRepoSlug(ctx context.Context, repoSlug string, 
 	var mr messagesResponse
 	resp, err := ms.client.Do(ctx, req, &mr)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, mr.Pagination), err
 	}
 
-	return mr.Messages, resp, err
+	return mr.Messages, newResponse(resp, mr.Pagination), err
 }

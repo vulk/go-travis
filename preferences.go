@@ -38,6 +38,7 @@ type PreferenceBody struct {
 
 type preferencesResponse struct {
 	Preferences []*Preference `json:"preferences,omitempty"`
+	Pagination  *Pagination   `json:"@pagination"`
 }
 
 // Find fetches the current user's preference based on
@@ -67,7 +68,7 @@ func (ps *PreferencesService) Find(ctx context.Context, name string) (*Preferenc
 // List fetches the current user's preferences
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/preferences#for_user
-func (ps *PreferencesService) List(ctx context.Context) ([]*Preference, *http.Response, error) {
+func (ps *PreferencesService) List(ctx context.Context) ([]*Preference, *Response, error) {
 	u, err := urlWithOptions("preferences", nil)
 	if err != nil {
 		return nil, nil, err
@@ -81,10 +82,10 @@ func (ps *PreferencesService) List(ctx context.Context) ([]*Preference, *http.Re
 	var pr preferencesResponse
 	resp, err := ps.client.Do(ctx, req, &pr)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, pr.Pagination), err
 	}
 
-	return pr.Preferences, resp, err
+	return pr.Preferences, newResponse(resp, pr.Pagination), err
 }
 
 // Update updates the current user's preference based on

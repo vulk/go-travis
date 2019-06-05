@@ -38,7 +38,8 @@ type SettingBody struct {
 
 // settingsResponse represents response from the settings endpoints
 type settingsResponse struct {
-	Settings []*Setting `json:"settings,omitempty"`
+	Settings   []*Setting  `json:"settings,omitempty"`
+	Pagination *Pagination `json:"@pagination"`
 }
 
 const (
@@ -105,7 +106,7 @@ func (ss *SettingsService) FindByRepoSlug(ctx context.Context, repoSlug string, 
 // ListByRepoId fetches a list of settings of given repository id
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/settings#for_repository
-func (ss *SettingsService) ListByRepoId(ctx context.Context, repoId uint) ([]*Setting, *http.Response, error) {
+func (ss *SettingsService) ListByRepoId(ctx context.Context, repoId uint) ([]*Setting, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("repo/%d/settings", repoId), nil)
 	if err != nil {
 		return nil, nil, err
@@ -119,16 +120,16 @@ func (ss *SettingsService) ListByRepoId(ctx context.Context, repoId uint) ([]*Se
 	var sr settingsResponse
 	resp, err := ss.client.Do(ctx, req, &sr)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, sr.Pagination), err
 	}
 
-	return sr.Settings, resp, err
+	return sr.Settings, newResponse(resp, sr.Pagination), err
 }
 
 // ListByRepoSlug fetches a list of settings of given repository slug
 //
 // Travis CI API docs: https://developer.travis-ci.com/resource/settings#for_repository
-func (ss *SettingsService) ListByRepoSlug(ctx context.Context, repoSlug string) ([]*Setting, *http.Response, error) {
+func (ss *SettingsService) ListByRepoSlug(ctx context.Context, repoSlug string) ([]*Setting, *Response, error) {
 	u, err := urlWithOptions(fmt.Sprintf("repo/%s/settings", url.QueryEscape(repoSlug)), nil)
 	if err != nil {
 		return nil, nil, err
@@ -142,10 +143,10 @@ func (ss *SettingsService) ListByRepoSlug(ctx context.Context, repoSlug string) 
 	var sr settingsResponse
 	resp, err := ss.client.Do(ctx, req, &sr)
 	if err != nil {
-		return nil, resp, err
+		return nil, newResponse(resp, sr.Pagination), err
 	}
 
-	return sr.Settings, resp, err
+	return sr.Settings, newResponse(resp, sr.Pagination), err
 }
 
 // UpdateByRepoId updates a setting with setting property
